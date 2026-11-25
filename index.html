@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manajemen Asset IT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Asset Management — IT & GA</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -13,131 +13,151 @@
     <!-- Google Font Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased" x-data="itAssetApp()">
+<body class="bg-slate-50 text-slate-800 antialiased" x-data="assetManagementApp()" x-init="initApp()">
 
     <!-- Custom Notification Toast -->
-    <div x-show="toast.show" x-transition class="fixed top-5 right-5 z-50 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium flex items-center space-x-2"
+    <div x-show="toast.show" x-transition x-cloak
+         class="fixed top-4 right-4 left-4 sm:left-auto z-50 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium flex items-center space-x-2"
          :class="toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'">
         <i :class="toast.type === 'success' ? 'fa-solid fa-circle-check text-emerald-500' : 'fa-solid fa-circle-exclamation text-rose-500'"></i>
         <span x-text="toast.message"></span>
     </div>
 
-    <div class="min-h-screen flex flex-col">
+    <div class="min-h-screen flex flex-col pb-16 md:pb-0">
         <!-- Header -->
-        <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold shadow-md shadow-indigo-200">
-                        <i class="fa-solid fa-server"></i>
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+                <!-- Brand & Module Switcher -->
+                <div class="flex items-center space-x-2.5 min-w-0">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-white font-bold shadow-sm shrink-0 transition-colors"
+                         :class="activeModule === 'IT' ? 'bg-indigo-600 shadow-indigo-100' : 'bg-teal-600 shadow-teal-100'">
+                        <i class="fa-solid" :class="activeModule === 'IT' ? 'fa-server' : 'fa-building'"></i>
                     </div>
-                    <div>
-                        <h1 class="text-lg font-bold text-gray-900 leading-tight">IT Asset Manager</h1>
-                        <p class="text-xs text-gray-500">Pencatatan, Tracking & Histori Inventaris</p>
+                    <div class="min-w-0">
+                        <h1 class="text-sm sm:text-base font-bold text-slate-900 truncate">
+                            <span x-text="activeModule === 'IT' ? 'IT Asset Module' : 'GA Asset Module'"></span>
+                        </h1>
+                        <p class="text-[11px] text-slate-500 truncate hidden sm:block">Inventaris, Mutasi & Laporan Terpisah</p>
                     </div>
                 </div>
-                <!-- Navigation Tabs -->
-                <nav class="hidden md:flex space-x-1 bg-gray-100 p-1 rounded-xl">
-                    <button @click="currentTab = 'assets'" :class="currentTab === 'assets' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'" class="px-4 py-2 text-sm font-medium rounded-lg transition-all">
-                        <i class="fa-solid fa-laptop mr-2"></i>Daftar Asset
+
+                <!-- Module Toggle (IT vs GA) -->
+                <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
+                    <button @click="switchModule('IT')"
+                            :class="activeModule === 'IT' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+                            class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center space-x-1.5">
+                        <i class="fa-solid fa-laptop-code"></i>
+                        <span>IT</span>
                     </button>
-                    <button @click="currentTab = 'transfer'" :class="currentTab === 'transfer' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'" class="px-4 py-2 text-sm font-medium rounded-lg transition-all">
-                        <i class="fa-solid fa-right-left mr-2"></i>Perpindahan
+                    <button @click="switchModule('GA')"
+                            :class="activeModule === 'GA' ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+                            class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center space-x-1.5">
+                        <i class="fa-solid fa-couch"></i>
+                        <span>GA</span>
                     </button>
-                    <button @click="currentTab = 'return'" :class="currentTab === 'return' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'" class="px-4 py-2 text-sm font-medium rounded-lg transition-all">
-                        <i class="fa-solid fa-rotate-left mr-2"></i>Pengembalian
+                </div>
+
+                <!-- Desktop Navigation Tabs -->
+                <nav class="hidden lg:flex space-x-1 bg-slate-100 p-1 rounded-xl">
+                    <button @click="currentTab = 'assets'" :class="currentTab === 'assets' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all">
+                        <i class="fa-solid fa-boxes-stacked mr-1.5"></i>Daftar Asset
                     </button>
-                    <button @click="currentTab = 'history'" :class="currentTab === 'history' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'" class="px-4 py-2 text-sm font-medium rounded-lg transition-all">
-                        <i class="fa-solid fa-clock-rotate-left mr-2"></i>Histori Aktivitas
+                    <button @click="currentTab = 'transfer'" :class="currentTab === 'transfer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all">
+                        <i class="fa-solid fa-right-left mr-1.5"></i>Perpindahan
+                    </button>
+                    <button @click="currentTab = 'return'" :class="currentTab === 'return' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all">
+                        <i class="fa-solid fa-rotate-left mr-1.5"></i>Pengembalian
+                    </button>
+                    <button @click="currentTab = 'history'" :class="currentTab === 'history' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'" class="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all">
+                        <i class="fa-solid fa-clock-rotate-left mr-1.5"></i>Histori
                     </button>
                 </nav>
-                <!-- Quick Action Buttons -->
-                <div class="flex items-center space-x-2">
-                    <button @click="openAssetModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-sm transition-all flex items-center space-x-2">
-                        <i class="fa-solid fa-plus"></i>
-                        <span class="hidden sm:inline">Tambah Asset</span>
-                    </button>
-                </div>
-            </div>
-            <!-- Mobile Tab Nav -->
-            <div class="flex md:hidden bg-gray-100 p-1 border-t border-gray-200 overflow-x-auto">
-                <button @click="currentTab = 'assets'" :class="currentTab === 'assets' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600'" class="flex-1 py-2 text-xs font-medium rounded-lg whitespace-nowrap px-3">Asset</button>
-                <button @click="currentTab = 'transfer'" :class="currentTab === 'transfer' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600'" class="flex-1 py-2 text-xs font-medium rounded-lg whitespace-nowrap px-3">Perpindahan</button>
-                <button @click="currentTab = 'return'" :class="currentTab === 'return' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600'" class="flex-1 py-2 text-xs font-medium rounded-lg whitespace-nowrap px-3">Pengembalian</button>
-                <button @click="currentTab = 'history'" :class="currentTab === 'history' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600'" class="flex-1 py-2 text-xs font-medium rounded-lg whitespace-nowrap px-3">Histori</button>
+
+                <!-- Add Button -->
+                <button @click="openAssetModal()"
+                        :class="activeModule === 'IT' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-teal-600 hover:bg-teal-700'"
+                        class="text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium shadow-sm transition-all flex items-center space-x-1.5 shrink-0">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden sm:inline">Tambah <span x-text="activeModule"></span></span>
+                </button>
             </div>
         </header>
 
-        <!-- Main Content Area -->
-        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Main Content -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
 
             <!-- TAB 1: DAFTAR ASSET -->
-            <div x-show="currentTab === 'assets'" class="space-y-6">
+            <div x-show="currentTab === 'assets'" class="space-y-4 sm:space-y-6">
                 <!-- Summary Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Total Asset</p>
-                            <h3 class="text-2xl font-bold text-gray-900 mt-1" x-text="assets.length">0</h3>
+                            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total <span x-text="activeModule"></span></p>
+                            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 mt-1" x-text="currentAssets.length">0</h3>
                         </div>
-                        <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
-                            <i class="fa-solid fa-boxes-stacked text-xl"></i>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center"
+                             :class="activeModule === 'IT' ? 'bg-indigo-50 text-indigo-600' : 'bg-teal-50 text-teal-600'">
+                            <i class="fa-solid fa-boxes-stacked text-lg sm:text-xl"></i>
                         </div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Asset Digunakan</p>
-                            <h3 class="text-2xl font-bold text-emerald-600 mt-1" x-text="assets.filter(a => a.status === 'Digunakan').length">0</h3>
+                            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Digunakan</p>
+                            <h3 class="text-xl sm:text-2xl font-bold text-emerald-600 mt-1" x-text="currentAssets.filter(a => a.status === 'Digunakan').length">0</h3>
                         </div>
-                        <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
-                            <i class="fa-solid fa-circle-check text-xl"></i>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-circle-check text-lg sm:text-xl"></i>
                         </div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Tersedia di Gudang</p>
-                            <h3 class="text-2xl font-bold text-blue-600 mt-1" x-text="assets.filter(a => a.status === 'Tersedia').length">0</h3>
+                            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Tersedia</p>
+                            <h3 class="text-xl sm:text-2xl font-bold text-blue-600 mt-1" x-text="currentAssets.filter(a => a.status === 'Tersedia').length">0</h3>
                         </div>
-                        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-                            <i class="fa-solid fa-warehouse text-xl"></i>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-warehouse text-lg sm:text-xl"></i>
                         </div>
                     </div>
-                    <div class="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+                    <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
                         <div>
-                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Perbaikan / Rusak</p>
-                            <h3 class="text-2xl font-bold text-amber-600 mt-1" x-text="assets.filter(a => a.status === 'Perbaikan' || a.status === 'Rusak').length">0</h3>
+                            <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Servis / Rusak</p>
+                            <h3 class="text-xl sm:text-2xl font-bold text-amber-600 mt-1" x-text="currentAssets.filter(a => a.status === 'Perbaikan' || a.status === 'Rusak').length">0</h3>
                         </div>
-                        <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
-                            <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                            <i class="fa-solid fa-triangle-exclamation text-lg sm:text-xl"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- Controls & Filter Toolbar -->
-                <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div class="flex flex-col sm:flex-row items-center w-full md:w-auto gap-3">
-                        <!-- Search Bar -->
-                        <div class="relative w-full sm:w-72">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                <i class="fa-solid fa-magnifying-glass"></i>
+                <!-- Filter & Excel Export Toolbar -->
+                <div class="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 flex-1">
+                        <!-- Search -->
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                <i class="fa-solid fa-magnifying-glass text-xs"></i>
                             </span>
-                            <input type="text" x-model="searchQuery" @input="currentPage = 1" placeholder="Cari nama, barcode, PJ..." class="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
+                            <input type="text" x-model="searchQuery" @input="currentPage = 1"
+                                   placeholder="Cari kode, nama, lokasi, PJ..."
+                                   class="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         </div>
-                        <!-- Filter Kategori -->
-                        <select x-model="filterCategory" @change="currentPage = 1" class="w-full sm:w-auto px-3 py-2 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="">Semua Kategori</option>
-                            <option value="Laptop">Laptop</option>
-                            <option value="PC Desktop">PC Desktop</option>
-                            <option value="Monitor">Monitor</option>
-                            <option value="Printer">Printer</option>
-                            <option value="Networking">Networking</option>
-                            <option value="Server">Server</option>
-                            <option value="Lainnya">Lainnya</option>
+
+                        <!-- Filter Kategori Dinamis per Modul -->
+                        <select x-model="filterCategory" @change="currentPage = 1"
+                                class="px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="">Semua Kategori <span x-text="activeModule"></span></option>
+                            <template x-for="cat in moduleCategories[activeModule]" :key="cat">
+                                <option :value="cat" x-text="cat"></option>
+                            </template>
                         </select>
+
                         <!-- Filter Status -->
-                        <select x-model="filterStatus" @change="currentPage = 1" class="w-full sm:w-auto px-3 py-2 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <select x-model="filterStatus" @change="currentPage = 1"
+                                class="px-3 py-2 text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <option value="">Semua Status</option>
                             <option value="Tersedia">Tersedia</option>
                             <option value="Digunakan">Digunakan</option>
@@ -145,335 +165,362 @@
                             <option value="Rusak">Rusak</option>
                         </select>
                     </div>
-                    <!-- Export Buttons -->
-                    <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-                        <button @click="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2 shadow-sm">
+
+                    <!-- Tombol Export Excel Terpisah per Modul -->
+                    <div class="flex items-center justify-end gap-2 pt-1 lg:pt-0">
+                        <button @click="exportModuleExcel(activeModule)"
+                                class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-center space-x-2 shadow-sm">
                             <i class="fa-solid fa-file-excel"></i>
-                            <span>Excel</span>
-                        </button>
-                        <button @click="exportToPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2 shadow-sm">
-                            <i class="fa-solid fa-file-pdf"></i>
-                            <span>PDF / Print</span>
+                            <span>Download Laporan <span x-text="activeModule"></span> (Excel)</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Data Table -->
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <!-- Mobile Card View (< md) -->
+                <div class="grid grid-cols-1 gap-3 md:hidden">
+                    <template x-for="asset in paginatedAssets" :key="asset.id">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700" x-text="asset.code"></span>
+                                    <h4 class="font-bold text-slate-900 text-sm mt-1" x-text="asset.name"></h4>
+                                    <p class="text-xs text-slate-500" x-text="asset.category + ' • ' + (asset.identifier || '-')"></p>
+                                </div>
+                                <span class="px-2.5 py-1 text-[11px] rounded-full font-semibold shrink-0"
+                                      :class="{
+                                          'bg-blue-100 text-blue-800': asset.status === 'Tersedia',
+                                          'bg-emerald-100 text-emerald-800': asset.status === 'Digunakan',
+                                          'bg-amber-100 text-amber-800': asset.status === 'Perbaikan',
+                                          'bg-rose-100 text-rose-800': asset.status === 'Rusak'
+                                      }" x-text="asset.status"></span>
+                            </div>
+                            <div class="text-xs text-slate-600 grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-100">
+                                <div><span class="text-slate-400">Lokasi:</span> <span class="font-medium" x-text="asset.location"></span></div>
+                                <div><span class="text-slate-400">PJ:</span> <span class="font-medium" x-text="asset.holder"></span></div>
+                                <div><span class="text-slate-400">Kondisi:</span> <span class="font-medium" x-text="asset.condition"></span></div>
+                                <div><span class="text-slate-400">Jatuh Tempo:</span> <span class="font-medium" x-text="asset.dueDate || '-'"></span></div>
+                            </div>
+                            <div class="flex justify-end space-x-2 pt-1">
+                                <button @click="editAsset(asset)" class="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg">
+                                    <i class="fa-solid fa-pen-to-square mr-1"></i>Edit
+                                </button>
+                                <button @click="deleteAsset(asset.id)" class="px-3 py-1.5 text-xs font-medium text-rose-600 bg-rose-50 rounded-lg">
+                                    <i class="fa-solid fa-trash mr-1"></i>Hapus
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Desktop Table View (>= md) -->
+                <div class="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    <th class="px-6 py-3">Barcode / Kode</th>
-                                    <th class="px-6 py-3">Nama Asset</th>
-                                    <th class="px-6 py-3">Kategori</th>
-                                    <th class="px-6 py-3">Kondisi</th>
-                                    <th class="px-6 py-3">Lokasi</th>
-                                    <th class="px-6 py-3">Penanggung Jawab</th>
-                                    <th class="px-6 py-3">Status</th>
-                                    <th class="px-6 py-3 text-right">Aksi</th>
+                        <table class="min-w-full divide-y divide-slate-200">
+                            <thead class="bg-slate-50">
+                                <tr class="text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th class="px-5 py-3">Kode</th>
+                                    <th class="px-5 py-3">Nama Asset</th>
+                                    <th class="px-5 py-3">Kategori</th>
+                                    <th class="px-5 py-3" x-text="activeModule === 'IT' ? 'Serial / Spec' : 'Plat / Info'"></th>
+                                    <th class="px-5 py-3">Lokasi</th>
+                                    <th class="px-5 py-3">Penanggung Jawab</th>
+                                    <th class="px-5 py-3">Kondisi</th>
+                                    <th class="px-5 py-3">Status</th>
+                                    <th class="px-5 py-3 text-right">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 text-sm">
+                            <tbody class="divide-y divide-slate-200 text-sm">
                                 <template x-for="asset in paginatedAssets" :key="asset.id">
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap font-mono text-xs font-semibold text-indigo-600" x-text="asset.code"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900" x-text="asset.name"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-gray-600" x-text="asset.category"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2.5 py-1 text-xs rounded-full font-medium"
-                                                :class="{
-                                                    'bg-emerald-100 text-emerald-800': asset.condition === 'Baik',
-                                                    'bg-amber-100 text-amber-800': asset.condition === 'Perlu Servis',
-                                                    'bg-rose-100 text-rose-800': asset.condition === 'Rusak'
-                                                }" x-text="asset.condition"></span>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-5 py-3.5 whitespace-nowrap font-mono text-xs font-semibold text-slate-700" x-text="asset.code"></td>
+                                        <td class="px-5 py-3.5 font-medium text-slate-900">
+                                            <div x-text="asset.name"></div>
+                                            <div class="text-[11px] text-slate-400" x-show="asset.dueDate" x-text="'Due: ' + asset.dueDate"></div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-gray-600" x-text="asset.location"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-gray-600" x-text="asset.holder"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-slate-600 text-xs" x-text="asset.category"></td>
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-slate-600 text-xs font-mono" x-text="asset.identifier || '-'"></td>
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-slate-600 text-xs" x-text="asset.location"></td>
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-slate-600 text-xs" x-text="asset.holder"></td>
+                                        <td class="px-5 py-3.5 whitespace-nowrap">
                                             <span class="px-2.5 py-1 text-xs rounded-full font-medium"
-                                                :class="{
-                                                    'bg-blue-100 text-blue-800': asset.status === 'Tersedia',
-                                                    'bg-emerald-100 text-emerald-800': asset.status === 'Digunakan',
-                                                    'bg-amber-100 text-amber-800': asset.status === 'Perbaikan',
-                                                    'bg-rose-100 text-rose-800': asset.status === 'Rusak'
-                                                }" x-text="asset.status"></span>
+                                                  :class="{
+                                                      'bg-emerald-100 text-emerald-800': asset.condition === 'Baik',
+                                                      'bg-amber-100 text-amber-800': asset.condition === 'Perlu Servis',
+                                                      'bg-rose-100 text-rose-800': asset.condition === 'Rusak'
+                                                  }" x-text="asset.condition"></span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right space-x-2">
-                                            <button @click="editAsset(asset)" class="text-indigo-600 hover:text-indigo-900 p-1 rounded-lg hover:bg-indigo-50 transition-colors" title="Edit">
+                                        <td class="px-5 py-3.5 whitespace-nowrap">
+                                            <span class="px-2.5 py-1 text-xs rounded-full font-medium"
+                                                  :class="{
+                                                      'bg-blue-100 text-blue-800': asset.status === 'Tersedia',
+                                                      'bg-emerald-100 text-emerald-800': asset.status === 'Digunakan',
+                                                      'bg-amber-100 text-amber-800': asset.status === 'Perbaikan',
+                                                      'bg-rose-100 text-rose-800': asset.status === 'Rusak'
+                                                  }" x-text="asset.status"></span>
+                                        </td>
+                                        <td class="px-5 py-3.5 whitespace-nowrap text-right space-x-1">
+                                            <button @click="editAsset(asset)" class="text-indigo-600 hover:bg-indigo-50 p-1.5 rounded-lg transition-colors" title="Edit">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </button>
-                                            <button @click="deleteAsset(asset.id)" class="text-rose-600 hover:text-rose-900 p-1 rounded-lg hover:bg-rose-50 transition-colors" title="Hapus">
+                                            <button @click="deleteAsset(asset.id)" class="text-rose-600 hover:bg-rose-50 p-1.5 rounded-lg transition-colors" title="Hapus">
                                                 <i class="fa-solid fa-trash"></i>
                                             </button>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <template x-if="paginatedAssets.length === 0">
-                                    <tr>
-                                        <td colspan="8" class="px-6 py-12 text-center text-gray-400">
-                                            <i class="fa-solid fa-folder-open text-4xl mb-2"></i>
-                                            <p>Tidak ada data asset ditemukan.</p>
                                         </td>
                                     </tr>
                                 </template>
                             </tbody>
                         </table>
                     </div>
+                </div>
 
-                    <!-- Pagination (First, Prev, Next, Last) -->
-                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div class="text-sm text-gray-500">
-                            Menampilkan <span class="font-medium" x-text="filteredAssets.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0"></span>
-                            sampai <span class="font-medium" x-text="Math.min(currentPage * itemsPerPage, filteredAssets.length)"></span>
-                            dari <span class="font-medium" x-text="filteredAssets.length"></span> data asset
-                        </div>
-                        <div class="flex items-center space-x-1">
-                            <!-- Tombol First -->
-                            <button @click="firstPage()" :disabled="currentPage === 1" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                                <i class="fa-solid fa-angles-left mr-1"></i> First
-                            </button>
-                            <!-- Tombol Prev -->
-                            <button @click="prevPage()" :disabled="currentPage === 1" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                                <i class="fa-solid fa-angle-left mr-1"></i> Prev
-                            </button>
-                            <span class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg" x-text="currentPage + ' / ' + (totalPages || 1)"></span>
-                            <!-- Tombol Next -->
-                            <button @click="nextPage()" :disabled="currentPage >= totalPages || totalPages === 0" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                                Next <i class="fa-solid fa-angle-right ml-1"></i>
-                            </button>
-                            <!-- Tombol Last -->
-                            <button @click="lastPage()" :disabled="currentPage >= totalPages || totalPages === 0" class="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
-                                Last <i class="fa-solid fa-angles-right ml-1"></i>
-                            </button>
-                        </div>
+                <!-- Empty State -->
+                <div x-show="paginatedAssets.length === 0" class="bg-white rounded-2xl border border-slate-200 p-10 text-center text-slate-400">
+                    <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
+                    <p class="text-sm">Tidak ada data asset <span x-text="activeModule"></span> yang sesuai filter.</p>
+                </div>
+
+                <!-- Pagination -->
+                <div class="bg-white px-4 py-3 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+                    <div>
+                        Menampilkan <span class="font-semibold" x-text="filteredAssets.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0"></span>
+                        – <span class="font-semibold" x-text="Math.min(currentPage * itemsPerPage, filteredAssets.length)"></span>
+                        dari <span class="font-semibold" x-text="filteredAssets.length"></span> data
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <button @click="firstPage()" :disabled="currentPage === 1" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white disabled:opacity-40">First</button>
+                        <button @click="prevPage()" :disabled="currentPage === 1" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white disabled:opacity-40">Prev</button>
+                        <span class="px-3 py-1.5 rounded-lg bg-slate-100 font-semibold" x-text="currentPage + ' / ' + (totalPages || 1)"></span>
+                        <button @click="nextPage()" :disabled="currentPage >= totalPages || totalPages === 0" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white disabled:opacity-40">Next</button>
+                        <button @click="lastPage()" :disabled="currentPage >= totalPages || totalPages === 0" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white disabled:opacity-40">Last</button>
                     </div>
                 </div>
             </div>
 
             <!-- TAB 2: PERPINDAHAN ASSET -->
-            <div x-show="currentTab === 'transfer'" class="max-w-2xl mx-auto space-y-6">
-                <div class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
-                    <div class="flex items-center space-x-3 mb-6">
-                        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                            <i class="fa-solid fa-right-left"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-lg font-bold text-gray-900">Formulir Perpindahan Asset</h2>
-                            <p class="text-xs text-gray-500">Pindahkan lokasi atau ganti penanggung jawab asset IT</p>
-                        </div>
+            <div x-show="currentTab === 'transfer'" class="max-w-2xl mx-auto">
+                <div class="bg-white p-5 sm:p-7 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Perpindahan Asset <span x-text="activeModule"></span></h2>
+                        <p class="text-xs text-slate-500">Mutasi lokasi atau penanggung jawab dalam modul <span x-text="activeModule"></span></p>
                     </div>
-
                     <form @submit.prevent="submitTransfer" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Asset</label>
-                            <select x-model="transferForm.assetId" @change="onTransferAssetSelect" required class="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
-                                <option value="">-- Pilih Asset IT --</option>
-                                <template x-for="asset in assets" :key="asset.id">
-                                    <option :value="asset.id" x-text="asset.code + ' - ' + asset.name + ' (Lokasi: ' + asset.location + ')'"></option>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Asset</label>
+                            <select x-model="transferForm.assetId" @change="onTransferAssetSelect" required class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl">
+                                <option value="">-- Pilih Asset --</option>
+                                <template x-for="asset in currentAssets" :key="asset.id">
+                                    <option :value="asset.id" x-text="asset.code + ' - ' + asset.name + ' (' + asset.location + ')'"></option>
                                 </template>
                             </select>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi Asal</label>
-                                <input type="text" x-model="transferForm.oldLocation" disabled class="w-full px-3.5 py-2.5 text-sm bg-gray-100 border border-gray-300 rounded-xl text-gray-500 cursor-not-allowed">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Lokasi Asal</label>
+                                <input type="text" x-model="transferForm.oldLocation" disabled class="w-full px-3.5 py-2 text-sm bg-slate-100 border border-slate-200 rounded-xl text-slate-500">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi Tujuan Baru</label>
-                                <input type="text" x-model="transferForm.newLocation" required placeholder="cth: Ruang Server Lt. 3" class="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Lokasi Tujuan Baru</label>
+                                <input type="text" x-model="transferForm.newLocation" required placeholder="cth: Ruang Rapat Lt. 2 / Parkir B" class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
                             </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Penanggung Jawab Lama</label>
-                                <input type="text" x-model="transferForm.oldHolder" disabled class="w-full px-3.5 py-2.5 text-sm bg-gray-100 border border-gray-300 rounded-xl text-gray-500 cursor-not-allowed">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Penanggung Jawab Lama</label>
+                                <input type="text" x-model="transferForm.oldHolder" disabled class="w-full px-3.5 py-2 text-sm bg-slate-100 border border-slate-200 rounded-xl text-slate-500">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Penanggung Jawab Baru</label>
-                                <input type="text" x-model="transferForm.newHolder" required placeholder="cth: Budi Santoso" class="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Penanggung Jawab Baru</label>
+                                <input type="text" x-model="transferForm.newHolder" required placeholder="Nama PJ baru" class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Catatan / Alasan Perpindahan</label>
-                            <textarea x-model="transferForm.notes" rows="3" placeholder="cth: Mutasi divisi atau peremajaan ruangan..." class="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"></textarea>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Alasan</label>
+                            <textarea x-model="transferForm.notes" rows="2" class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl"></textarea>
                         </div>
-                        <div class="pt-2 flex justify-end">
-                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium shadow-sm transition-all flex items-center space-x-2">
-                                <i class="fa-solid fa-paper-plane"></i>
-                                <span>Proses Perpindahan</span>
-                            </button>
+                        <div class="flex justify-end">
+                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium">Simpan Perpindahan</button>
                         </div>
                     </form>
                 </div>
             </div>
 
             <!-- TAB 3: PENGEMBALIAN ASSET -->
-            <div x-show="currentTab === 'return'" class="max-w-2xl mx-auto space-y-6">
-                <div class="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-sm">
-                    <div class="flex items-center space-x-3 mb-6">
-                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                            <i class="fa-solid fa-rotate-left"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-lg font-bold text-gray-900">Formulir Pengembalian Asset</h2>
-                            <p class="text-xs text-gray-500">Kembalikan asset dari peminjam ke inventaris pusat / gudang</p>
-                        </div>
+            <div x-show="currentTab === 'return'" class="max-w-2xl mx-auto">
+                <div class="bg-white p-5 sm:p-7 rounded-2xl border border-slate-200 shadow-sm space-y-5">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">Pengembalian Asset <span x-text="activeModule"></span></h2>
+                        <p class="text-xs text-slate-500">Kembalikan asset yang sedang digunakan ke inventaris pusat</p>
                     </div>
-
                     <form @submit.prevent="submitReturn" class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Asset yang Dikembalikan</label>
-                            <select x-model="returnForm.assetId" @change="onReturnAssetSelect" required class="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Pilih Asset (Status: Digunakan)</label>
+                            <select x-model="returnForm.assetId" @change="onReturnAssetSelect" required class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl">
                                 <option value="">-- Pilih Asset --</option>
-                                <template x-for="asset in assets.filter(a => a.status === 'Digunakan')" :key="asset.id">
-                                    <option :value="asset.id" x-text="asset.code + ' - ' + asset.name + ' (Peminjam: ' + asset.holder + ')'"></option>
+                                <template x-for="asset in currentAssets.filter(a => a.status === 'Digunakan')" :key="asset.id">
+                                    <option :value="asset.id" x-text="asset.code + ' - ' + asset.name + ' (' + asset.holder + ')'"></option>
                                 </template>
                             </select>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Peminjam / PJ Saat Ini</label>
-                                <input type="text" x-model="returnForm.currentHolder" disabled class="w-full px-3.5 py-2.5 text-sm bg-gray-100 border border-gray-300 rounded-xl text-gray-500 cursor-not-allowed">
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">PJ Saat Ini</label>
+                                <input type="text" x-model="returnForm.currentHolder" disabled class="w-full px-3.5 py-2 text-sm bg-slate-100 border border-slate-200 rounded-xl text-slate-500">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Kondisi Saat Kembali</label>
-                                <select x-model="returnForm.condition" required class="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
-                                    <option value="Baik">Baik (Normal)</option>
-                                    <option value="Perlu Servis">Perlu Servis / Ringan</option>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Kondisi Saat Kembali</label>
+                                <select x-model="returnForm.condition" required class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
+                                    <option value="Baik">Baik</option>
+                                    <option value="Perlu Servis">Perlu Servis</option>
                                     <option value="Rusak">Rusak</option>
                                 </select>
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Pengembalian</label>
-                            <textarea x-model="returnForm.notes" rows="3" placeholder="cth: Selesai proyek, perlengkapan lengkap..." class="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500"></textarea>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Pengembalian</label>
+                            <textarea x-model="returnForm.notes" rows="2" class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl"></textarea>
                         </div>
-                        <div class="pt-2 flex justify-end">
-                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium shadow-sm transition-all flex items-center space-x-2">
-                                <i class="fa-solid fa-check"></i>
-                                <span>Konfirmasi Pengembalian</span>
-                            </button>
+                        <div class="flex justify-end">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium">Konfirmasi Kembali</button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <!-- TAB 4: HISTORI ASSET -->
-            <div x-show="currentTab === 'history'" class="space-y-6">
-                <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+            <!-- TAB 4: HISTORI AKTIVITAS -->
+            <div x-show="currentTab === 'history'" class="space-y-4">
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h2 class="text-base font-bold text-gray-900">Log Histori & Aktivitas Asset</h2>
-                        <p class="text-xs text-gray-500">Rekam jejak seluruh penambahan, perpindahan, dan pengembalian asset</p>
+                        <h2 class="text-base font-bold text-slate-900">Histori Aktivitas <span x-text="activeModule"></span></h2>
+                        <p class="text-xs text-slate-500">Log terpisah khusus modul <span x-text="activeModule"></span></p>
                     </div>
-                    <button @click="clearHistory()" class="text-xs text-rose-600 hover:text-rose-800 font-medium px-3 py-1.5 bg-rose-50 rounded-lg border border-rose-200 transition-colors">
-                        <i class="fa-solid fa-trash-can mr-1"></i> Bersihkan Log
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <button @click="exportHistoryExcel(activeModule)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-xl text-xs font-medium">
+                            <i class="fa-solid fa-file-excel mr-1"></i> Excel Histori <span x-text="activeModule"></span>
+                        </button>
+                        <button @click="clearModuleHistory()" class="text-xs text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-xl border border-rose-200 font-medium">
+                            Bersihkan Log
+                        </button>
+                    </div>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr class="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                    <th class="px-6 py-3">Waktu</th>
-                                    <th class="px-6 py-3">Tipe Aktivitas</th>
-                                    <th class="px-6 py-3">Kode / Asset</th>
-                                    <th class="px-6 py-3">Keterangan / Detail</th>
-                                    <th class="px-6 py-3">Catatan</th>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr class="text-left text-xs font-semibold text-slate-500 uppercase">
+                                <th class="px-5 py-3">Waktu</th>
+                                <th class="px-5 py-3">Tipe</th>
+                                <th class="px-5 py-3">Asset</th>
+                                <th class="px-5 py-3">Detail</th>
+                                <th class="px-5 py-3">Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 text-xs">
+                            <template x-for="log in currentHistories" :key="log.id">
+                                <tr class="hover:bg-slate-50">
+                                    <td class="px-5 py-3 whitespace-nowrap text-slate-500" x-text="log.timestamp"></td>
+                                    <td class="px-5 py-3 whitespace-nowrap">
+                                        <span class="px-2 py-0.5 rounded-full font-semibold"
+                                              :class="{
+                                                  'bg-indigo-100 text-indigo-800': log.type === 'TAMBAH',
+                                                  'bg-sky-100 text-sky-800': log.type === 'EDIT',
+                                                  'bg-amber-100 text-amber-800': log.type === 'PERPINDAHAN',
+                                                  'bg-emerald-100 text-emerald-800': log.type === 'PENGEMBALIAN',
+                                                  'bg-rose-100 text-rose-800': log.type === 'HAPUS'
+                                              }" x-text="log.type"></span>
+                                    </td>
+                                    <td class="px-5 py-3 font-medium text-slate-900" x-text="log.code + ' - ' + log.assetName"></td>
+                                    <td class="px-5 py-3 text-slate-600" x-text="log.detail"></td>
+                                    <td class="px-5 py-3 text-slate-500 italic" x-text="log.notes || '-'"></td>
                                 </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200 text-sm">
-                                <template x-for="log in histories" :key="log.id">
-                                    <tr class="hover:bg-gray-50 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap text-xs text-gray-500" x-text="log.timestamp"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2.5 py-1 text-xs rounded-full font-semibold"
-                                                :class="{
-                                                    'bg-indigo-100 text-indigo-800': log.type === 'TAMBAH',
-                                                    'bg-amber-100 text-amber-800': log.type === 'PERPINDAHAN',
-                                                    'bg-emerald-100 text-emerald-800': log.type === 'PENGEMBALIAN',
-                                                    'bg-rose-100 text-rose-800': log.type === 'HAPUS'
-                                                }" x-text="log.type"></span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                                            <span class="text-indigo-600 font-mono text-xs" x-text="log.code"></span> - <span x-text="log.assetName"></span>
-                                        </td>
-                                        <td class="px-6 py-4 text-gray-600 text-xs" x-text="log.detail"></td>
-                                        <td class="px-6 py-4 text-gray-500 text-xs italic" x-text="log.notes || '-'"></td>
-                                    </tr>
-                                </template>
-                                <template x-if="histories.length === 0">
-                                    <tr>
-                                        <td colspan="5" class="px-6 py-12 text-center text-gray-400">
-                                            <i class="fa-solid fa-clock-rotate-left text-4xl mb-2"></i>
-                                            <p>Belum ada catatan histori aktivitas.</p>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
+                            </template>
+                            <tr x-show="currentHistories.length === 0">
+                                <td colspan="5" class="px-5 py-8 text-center text-slate-400">Belum ada histori untuk modul <span x-text="activeModule"></span>.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-
         </main>
 
-        <!-- FOOTER -->
-        <footer class="bg-white border-t border-gray-200 mt-auto py-4 text-center text-xs text-gray-500">
-            &copy; 2026 IT Asset Management System. All rights reserved.
-        </footer>
+        <!-- Mobile Bottom Navigation Bar -->
+        <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 grid grid-cols-4 lg:hidden z-30">
+            <button @click="currentTab = 'assets'" :class="currentTab === 'assets' ? 'text-indigo-600 font-semibold bg-indigo-50/50' : 'text-slate-500'" class="py-2.5 flex flex-col items-center text-[11px]">
+                <i class="fa-solid fa-boxes-stacked text-base mb-0.5"></i>
+                <span>Asset</span>
+            </button>
+            <button @click="currentTab = 'transfer'" :class="currentTab === 'transfer' ? 'text-indigo-600 font-semibold bg-indigo-50/50' : 'text-slate-500'" class="py-2.5 flex flex-col items-center text-[11px]">
+                <i class="fa-solid fa-right-left text-base mb-0.5"></i>
+                <span>Pindah</span>
+            </button>
+            <button @click="currentTab = 'return'" :class="currentTab === 'return' ? 'text-indigo-600 font-semibold bg-indigo-50/50' : 'text-slate-500'" class="py-2.5 flex flex-col items-center text-[11px]">
+                <i class="fa-solid fa-rotate-left text-base mb-0.5"></i>
+                <span>Kembali</span>
+            </button>
+            <button @click="currentTab = 'history'" :class="currentTab === 'history' ? 'text-indigo-600 font-semibold bg-indigo-50/50' : 'text-slate-500'" class="py-2.5 flex flex-col items-center text-[11px]">
+                <i class="fa-solid fa-clock-rotate-left text-base mb-0.5"></i>
+                <span>Histori</span>
+            </button>
+        </nav>
     </div>
 
     <!-- MODAL TAMBAH / EDIT ASSET -->
-    <div x-show="isAssetModalOpen" class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4" x-cloak>
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-gray-200 space-y-4" @click.away="closeAssetModal()">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-                <h3 class="text-lg font-bold text-gray-900" x-text="isEditMode ? 'Edit Asset IT' : 'Tambah Asset IT Baru'"></h3>
-                <button @click="closeAssetModal()" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+    <div x-show="isAssetModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-xl border border-slate-200 space-y-4" @click.away="closeAssetModal()">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-base sm:text-lg font-bold text-slate-900">
+                    <span x-text="isEditMode ? 'Edit Asset' : 'Tambah Asset'"></span> <span x-text="activeModule"></span>
+                </h3>
+                <button @click="closeAssetModal()" class="text-slate-400 hover:text-slate-600 p-1">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
 
-            <form @submit.prevent="saveAsset" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <form @submit.prevent="saveAsset" class="space-y-3.5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kode / Barcode</label>
-                        <input type="text" x-model="assetForm.code" required placeholder="cth: AST-LPT-001" class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kode Asset</label>
+                        <input type="text" x-model="assetForm.code" required :placeholder="activeModule === 'IT' ? 'IT-LPT-009' : 'GA-VHC-009'" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
-                        <select x-model="assetForm.category" required class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori</label>
+                        <select x-model="assetForm.category" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
                             <option value="">-- Pilih Kategori --</option>
-                            <option value="Laptop">Laptop</option>
-                            <option value="PC Desktop">PC Desktop</option>
-                            <option value="Monitor">Monitor</option>
-                            <option value="Printer">Printer</option>
-                            <option value="Networking">Networking</option>
-                            <option value="Server">Server</option>
-                            <option value="Lainnya">Lainnya</option>
+                            <template x-for="cat in moduleCategories[activeModule]" :key="cat">
+                                <option :value="cat" x-text="cat"></option>
+                            </template>
                         </select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Asset / Merk & Tipe</label>
-                    <input type="text" x-model="assetForm.name" required placeholder="cth: MacBook Pro M2 14-inch" class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Asset</label>
+                    <input type="text" x-model="assetForm.name" required :placeholder="activeModule === 'IT' ? 'MacBook Pro M3 / Switch Cisco' : 'Toyota Avanza / Kursi Ergonomis'" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Kondisi</label>
-                        <select x-model="assetForm.condition" required class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1" x-text="activeModule === 'IT' ? 'Serial Number / Spec' : 'No. Polisi / Kode Ruang'"></label>
+                        <input type="text" x-model="assetForm.identifier" :placeholder="activeModule === 'IT' ? 'SN-889922' : 'B 1234 XYZ'" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1" x-text="activeModule === 'IT' ? 'Akhir Garansi / Lisensi' : 'Jadwal Pajak / Servis'"></label>
+                        <input type="date" x-model="assetForm.dueDate" class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kondisi</label>
+                        <select x-model="assetForm.condition" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
                             <option value="Baik">Baik</option>
                             <option value="Perlu Servis">Perlu Servis</option>
                             <option value="Rusak">Rusak</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Status Asset</label>
-                        <select x-model="assetForm.status" required class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
-                            <option value="Tersedia">Tersedia (Gudang)</option>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                        <select x-model="assetForm.status" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
+                            <option value="Tersedia">Tersedia</option>
                             <option value="Digunakan">Digunakan</option>
                             <option value="Perbaikan">Perbaikan</option>
                             <option value="Rusak">Rusak</option>
@@ -481,30 +528,30 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi</label>
-                        <input type="text" x-model="assetForm.location" required placeholder="cth: Gudang IT Lt. 2" class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Lokasi</label>
+                        <input type="text" x-model="assetForm.location" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Penanggung Jawab</label>
-                        <input type="text" x-model="assetForm.holder" required placeholder="cth: Tim IT Support / Nama Karyawan" class="w-full px-3.5 py-2 text-sm bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Penanggung Jawab</label>
+                        <input type="text" x-model="assetForm.holder" required class="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl">
                     </div>
                 </div>
 
-                <div class="pt-4 flex items-center justify-end space-x-3 border-t border-gray-100">
-                    <button type="button" @click="closeAssetModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Batal</button>
-                    <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors" x-text="isEditMode ? 'Simpan Perubahan' : 'Tambah Asset'"></button>
+                <div class="pt-3 flex justify-end space-x-2 border-t border-slate-100">
+                    <button type="button" @click="closeAssetModal()" class="px-4 py-2 text-xs font-medium text-slate-700 bg-slate-100 rounded-xl">Batal</button>
+                    <button type="submit" :class="activeModule === 'IT' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-teal-600 hover:bg-teal-700'" class="px-4 py-2 text-xs font-medium text-white rounded-xl">Simpan</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Alpine.js & Logic Script -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
-        function itAssetApp() {
+        function assetManagementApp() {
             return {
+                activeModule: 'IT', // 'IT' atau 'GA'
                 currentTab: 'assets',
                 searchQuery: '',
                 filterCategory: '',
@@ -512,75 +559,83 @@
                 currentPage: 1,
                 itemsPerPage: 6,
 
-                toast: {
-                    show: false,
-                    message: '',
-                    type: 'success'
+                moduleCategories: {
+                    IT: ['Laptop', 'PC Desktop', 'Monitor', 'Printer', 'Networking', 'Server', 'Lisensi'],
+                    GA: ['Kendaraan Operasional', 'Furnitur Kantor', 'AC & Elektronik', 'Peralatan Gedung', 'Keamanan']
+                },
+
+                toast: { show: false, message: '', type: 'success' },
+
+                assetsByModule: {
+                    IT: [
+                        { id: 101, module: 'IT', code: 'IT-LPT-001', name: 'MacBook Pro M2 14"', category: 'Laptop', identifier: 'SN-MBP-001', dueDate: '2027-05-01', condition: 'Baik', location: 'Ruang Meeting Lt. 2', holder: 'Rian Utama', status: 'Digunakan' },
+                        { id: 102, module: 'IT', code: 'IT-NET-001', name: 'Cisco Catalyst 2960', category: 'Networking', identifier: 'SN-CSK-2960', dueDate: '2026-12-15', condition: 'Baik', location: 'Ruang Server', holder: 'Andi Network', status: 'Digunakan' },
+                        { id: 103, module: 'IT', code: 'IT-LPT-002', name: 'Lenovo ThinkPad X1', category: 'Laptop', identifier: 'SN-LNV-882', dueDate: '2027-08-20', condition: 'Baik', location: 'Gudang IT', holder: 'Tim IT', status: 'Tersedia' }
+                    ],
+                    GA: [
+                        { id: 201, module: 'GA', code: 'GA-VHC-001', name: 'Toyota Avanza 1.5 G', category: 'Kendaraan Operasional', identifier: 'B 1420 KFA', dueDate: '2027-02-10', condition: 'Baik', location: 'Parkir Basement', holder: 'Budi Driver', status: 'Digunakan' },
+                        { id: 202, module: 'GA', code: 'GA-FUR-001', name: 'Meja Kerja Ergonomis Set', category: 'Furnitur Kantor', identifier: 'RM-OPS-01', dueDate: '', condition: 'Baik', location: 'Lantai 2 Operasional', holder: 'Siti GA', status: 'Digunakan' },
+                        { id: 203, module: 'GA', code: 'GA-AC-001', name: 'AC Split Daikin 2 PK', category: 'AC & Elektronik', identifier: 'AC-MTG-03', dueDate: '2026-12-28', condition: 'Perlu Servis', location: 'Ruang Rapat A', holder: 'Tim GA', status: 'Perbaikan' }
+                    ]
+                },
+
+                historiesByModule: {
+                    IT: [
+                        { id: 1, timestamp: '2026-11-01 09:00', type: 'TAMBAH', code: 'IT-LPT-001', assetName: 'MacBook Pro M2 14"', detail: 'Registrasi asset IT baru', notes: 'Pengadaan Q4' }
+                    ],
+                    GA: [
+                        { id: 1, timestamp: '2026-11-02 10:30', type: 'TAMBAH', code: 'GA-VHC-001', assetName: 'Toyota Avanza 1.5 G', detail: 'Registrasi kendaraan operasional GA', notes: 'STNK aktif' }
+                    ]
+                },
+
+                isAssetModalOpen: false,
+                isEditMode: false,
+                assetForm: this.emptyAssetForm(),
+                transferForm: { assetId: '', oldLocation: '', newLocation: '', oldHolder: '', newHolder: '', notes: '' },
+                returnForm: { assetId: '', currentHolder: '', condition: 'Baik', notes: '' },
+
+                emptyAssetForm() {
+                    return { id: null, module: this.activeModule, code: '', name: '', category: '', identifier: '', dueDate: '', condition: 'Baik', location: '', holder: '', status: 'Tersedia' };
+                },
+
+                initApp() {
+                    const savedAssets = localStorage.getItem('am_assets_v1');
+                    const savedHistories = localStorage.getItem('am_histories_v1');
+                    if (savedAssets) this.assetsByModule = JSON.parse(savedAssets);
+                    if (savedHistories) this.historiesByModule = JSON.parse(savedHistories);
+                },
+
+                persistData() {
+                    localStorage.setItem('am_assets_v1', JSON.stringify(this.assetsByModule));
+                    localStorage.setItem('am_histories_v1', JSON.stringify(this.historiesByModule));
+                },
+
+                switchModule(mod) {
+                    this.activeModule = mod;
+                    this.filterCategory = '';
+                    this.filterStatus = '';
+                    this.searchQuery = '';
+                    this.currentPage = 1;
+                    this.transferForm = { assetId: '', oldLocation: '', newLocation: '', oldHolder: '', newHolder: '', notes: '' };
+                    this.returnForm = { assetId: '', currentHolder: '', condition: 'Baik', notes: '' };
+                },
+
+                get currentAssets() {
+                    return this.assetsByModule[this.activeModule] || [];
+                },
+
+                get currentHistories() {
+                    return this.historiesByModule[this.activeModule] || [];
                 },
 
                 showToast(message, type = 'success') {
-                    this.toast.message = message;
-                    this.toast.type = type;
-                    this.toast.show = true;
-                    setTimeout(() => {
-                        this.toast.show = false;
-                    }, 3500);
-                },
-
-                // Default Mock Data Asset
-                assets: [
-                    { id: 1, code: 'AST-LPT-001', name: 'MacBook Pro M2 14"', category: 'Laptop', condition: 'Baik', location: 'Ruang Meeting Lt. 2', holder: 'Rian Utama', status: 'Digunakan' },
-                    { id: 2, code: 'AST-LPT-002', name: 'Lenovo ThinkPad X1 Carbon', category: 'Laptop', condition: 'Baik', location: 'Gudang IT', holder: 'Tim IT Support', status: 'Tersedia' },
-                    { id: 3, code: 'AST-DSK-001', name: 'PC Custom Core i7 RTX 3060', category: 'PC Desktop', condition: 'Baik', location: 'Divisi Desain', holder: 'Siti Aminah', status: 'Digunakan' },
-                    { id: 4, code: 'AST-MNT-001', name: 'Dell UltraSharp 27 4K', category: 'Monitor', condition: 'Baik', location: 'Divisi Desain', holder: 'Siti Aminah', status: 'Digunakan' },
-                    { id: 5, code: 'AST-PRT-001', name: 'Epson L3210 All-in-One', category: 'Printer', condition: 'Perlu Servis', location: 'Administrasi Lt. 1', holder: 'Dewi Lestari', status: 'Perbaikan' },
-                    { id: 6, code: 'AST-NET-001', name: 'Cisco Catalyst 2960 Switch', category: 'Networking', condition: 'Baik', location: 'Ruang Server Utama', holder: 'Andi Network', status: 'Digunakan' },
-                    { id: 7, code: 'AST-SRV-001', name: 'Dell PowerEdge R740 Server', category: 'Server', condition: 'Baik', location: 'Ruang Server Utama', holder: 'Andi Network', status: 'Digunakan' },
-                    { id: 8, code: 'AST-LPT-003', name: 'ASUS Zenbook 14 OLED', category: 'Laptop', condition: 'Baik', location: 'Gudang IT', holder: 'Tim IT Support', status: 'Tersedia' }
-                ],
-
-                // Default Mock Histori
-                histories: [
-                    { id: 1, timestamp: '2026-06-01 09:30', type: 'TAMBAH', code: 'AST-LPT-001', assetName: 'MacBook Pro M2 14"', detail: 'Registrasi asset baru ke sistem', notes: 'Pembelian baru' },
-                    { id: 2, timestamp: '2026-06-03 14:15', type: 'PERPINDAHAN', code: 'AST-LPT-001', assetName: 'MacBook Pro M2 14"', detail: 'Dari Gudang ke Ruang Meeting Lt. 2 (PJ: Rian Utama)', notes: 'Keperluan presentasi klien' },
-                    { id: 3, timestamp: '2026-06-05 10:00', type: 'TAMBAH', code: 'AST-PRT-001', assetName: 'Epson L3210 All-in-One', detail: 'Registrasi asset baru ke sistem', notes: 'Inventaris kantor' }
-                ],
-
-                // Modal state
-                isAssetModalOpen: false,
-                isEditMode: false,
-                assetForm: {
-                    id: null,
-                    code: '',
-                    name: '',
-                    category: '',
-                    condition: 'Baik',
-                    location: '',
-                    holder: '',
-                    status: 'Tersedia'
-                },
-
-                // Transfer Form State
-                transferForm: {
-                    assetId: '',
-                    oldLocation: '',
-                    newLocation: '',
-                    oldHolder: '',
-                    newHolder: '',
-                    notes: ''
-                },
-
-                // Return Form State
-                returnForm: {
-                    assetId: '',
-                    currentHolder: '',
-                    condition: 'Baik',
-                    notes: ''
+                    this.toast = { show: true, message, type };
+                    setTimeout(() => { this.toast.show = false; }, 3000);
                 },
 
                 openAssetModal() {
                     this.isEditMode = false;
-                    this.assetForm = { id: null, code: '', name: '', category: '', condition: 'Baik', location: '', holder: '', status: 'Tersedia' };
+                    this.assetForm = this.emptyAssetForm();
                     this.isAssetModalOpen = true;
                 },
 
@@ -595,88 +650,85 @@
                 },
 
                 saveAsset() {
+                    const list = this.assetsByModule[this.activeModule];
+                    const duplicate = list.find(a => a.code.toLowerCase() === this.assetForm.code.trim().toLowerCase() && a.id !== this.assetForm.id);
+                    if (duplicate) {
+                        this.showToast(`Kode ${this.assetForm.code} sudah digunakan di modul ${this.activeModule}!`, 'error');
+                        return;
+                    }
+
                     if (this.isEditMode) {
-                        const index = this.assets.findIndex(a => a.id === this.assetForm.id);
-                        if (index !== -1) {
-                            this.assets[index] = { ...this.assetForm };
-                            this.addHistory('PERPINDAHAN', this.assetForm.code, this.assetForm.name, `Pembaruan data asset: Lokasi (${this.assetForm.location}), PJ (${this.assetForm.holder})`, 'Edit manual');
-                            this.showToast('Asset berhasil diperbarui!', 'success');
+                        const idx = list.findIndex(a => a.id === this.assetForm.id);
+                        if (idx !== -1) {
+                            list[idx] = { ...this.assetForm, module: this.activeModule };
+                            this.addHistory('EDIT', this.assetForm.code, this.assetForm.name, `Update data (${this.assetForm.location} / ${this.assetForm.holder})`, 'Perubahan data asset');
+                            this.showToast(`Asset ${this.activeModule} diperbarui.`);
                         }
                     } else {
-                        const newAsset = { ...this.assetForm, id: Date.now() };
-                        this.assets.push(newAsset);
-                        this.addHistory('TAMBAH', newAsset.code, newAsset.name, 'Registrasi asset baru ke inventaris', 'Input baru');
-                        this.showToast('Asset baru berhasil ditambahkan!', 'success');
+                        const newAsset = { ...this.assetForm, id: Date.now(), module: this.activeModule };
+                        list.push(newAsset);
+                        this.addHistory('TAMBAH', newAsset.code, newAsset.name, `Registrasi asset baru (${newAsset.category})`, 'Input baru');
+                        this.showToast(`Asset ${this.activeModule} ditambahkan.`);
                     }
+                    this.persistData();
                     this.closeAssetModal();
                 },
 
                 deleteAsset(id) {
-                    if (confirm('Apakah Anda yakin ingin menghapus asset ini dari sistem?')) {
-                        const asset = this.assets.find(a => a.id === id);
-                        if (asset) {
-                            this.addHistory('HAPUS', asset.code, asset.name, 'Asset dihapus dari sistem', 'Penghapusan data');
-                        }
-                        this.assets = this.assets.filter(a => a.id !== id);
-                        this.showToast('Asset berhasil dihapus.', 'success');
+                    const list = this.assetsByModule[this.activeModule];
+                    const target = list.find(a => a.id === id);
+                    if (!target) return;
+                    if (confirm(`Hapus asset ${target.code} - ${target.name}?`)) {
+                        this.assetsByModule[this.activeModule] = list.filter(a => a.id !== id);
+                        this.addHistory('HAPUS', target.code, target.name, 'Menghapus asset dari daftar', 'Penghapusan data');
+                        this.persistData();
+                        this.showToast('Asset dihapus.');
                     }
                 },
 
                 onTransferAssetSelect() {
-                    const selected = this.assets.find(a => a.id == this.transferForm.assetId);
-                    if (selected) {
-                        this.transferForm.oldLocation = selected.location;
-                        this.transferForm.oldHolder = selected.holder;
-                        this.transferForm.newLocation = '';
-                        this.transferForm.newHolder = '';
-                    } else {
-                        this.transferForm.oldLocation = '';
-                        this.transferForm.oldHolder = '';
-                    }
+                    const asset = this.currentAssets.find(a => a.id == this.transferForm.assetId);
+                    this.transferForm.oldLocation = asset ? asset.location : '';
+                    this.transferForm.oldHolder = asset ? asset.holder : '';
                 },
 
                 submitTransfer() {
-                    const asset = this.assets.find(a => a.id == this.transferForm.assetId);
+                    const asset = this.currentAssets.find(a => a.id == this.transferForm.assetId);
                     if (!asset) return;
 
-                    const detailText = `Dari [${asset.location} / ${asset.holder}] ke [${this.transferForm.newLocation} / ${this.transferForm.newHolder}]`;
-                    
+                    const detail = `[${asset.location} / ${asset.holder}] -> [${this.transferForm.newLocation} / ${this.transferForm.newHolder}]`;
                     asset.location = this.transferForm.newLocation;
                     asset.holder = this.transferForm.newHolder;
                     asset.status = 'Digunakan';
 
-                    this.addHistory('PERPINDAHAN', asset.code, asset.name, detailText, this.transferForm.notes);
-                    this.showToast('Perpindahan asset berhasil dicatat!', 'success');
-
-                    // Reset Form
+                    this.addHistory('PERPINDAHAN', asset.code, asset.name, detail, this.transferForm.notes);
+                    this.persistData();
+                    this.showToast('Perpindahan asset tercatat.');
                     this.transferForm = { assetId: '', oldLocation: '', newLocation: '', oldHolder: '', newHolder: '', notes: '' };
                     this.currentTab = 'assets';
                 },
 
                 onReturnAssetSelect() {
-                    const selected = this.assets.find(a => a.id == this.returnForm.assetId);
-                    if (selected) {
-                        this.returnForm.currentHolder = selected.holder;
-                    } else {
-                        this.returnForm.currentHolder = '';
-                    }
+                    const asset = this.currentAssets.find(a => a.id == this.returnForm.assetId);
+                    this.returnForm.currentHolder = asset ? asset.holder : '';
                 },
 
                 submitReturn() {
-                    const asset = this.assets.find(a => a.id == this.returnForm.assetId);
+                    const asset = this.currentAssets.find(a => a.id == this.returnForm.assetId);
                     if (!asset) return;
 
                     const prevHolder = asset.holder;
-                    asset.location = 'Gudang IT Pusat';
-                    asset.holder = 'Tim IT Support';
-                    asset.status = 'Tersedia';
+                    const defaultPoolLocation = this.activeModule === 'IT' ? 'Gudang IT Pusat' : 'Gudang GA Pusat';
+                    const defaultPoolHolder = this.activeModule === 'IT' ? 'Tim IT Support' : 'Tim General Affairs';
+
+                    asset.location = defaultPoolLocation;
+                    asset.holder = defaultPoolHolder;
                     asset.condition = this.returnForm.condition;
+                    asset.status = this.returnForm.condition === 'Rusak' ? 'Rusak' : (this.returnForm.condition === 'Perlu Servis' ? 'Perbaikan' : 'Tersedia');
 
-                    const detailText = `Dikembalikan oleh ${prevHolder} ke Gudang Pusat (Kondisi: ${this.returnForm.condition})`;
-                    this.addHistory('PENGEMBALIAN', asset.code, asset.name, detailText, this.returnForm.notes);
-                    this.showToast('Pengembalian asset berhasil diproses!', 'success');
-
-                    // Reset Form
+                    this.addHistory('PENGEMBALIAN', asset.code, asset.name, `Kembali dari ${prevHolder} ke ${defaultPoolLocation} (${this.returnForm.condition})`, this.returnForm.notes);
+                    this.persistData();
+                    this.showToast('Pengembalian asset diproses.');
                     this.returnForm = { assetId: '', currentHolder: '', condition: 'Baik', notes: '' };
                     this.currentTab = 'assets';
                 },
@@ -684,34 +736,31 @@
                 addHistory(type, code, assetName, detail, notes) {
                     const now = new Date();
                     const timestamp = now.toISOString().slice(0, 10) + ' ' + now.toTimeString().slice(0, 5);
-                    this.histories.unshift({
-                        id: Date.now(),
-                        timestamp,
-                        type,
-                        code,
-                        assetName,
-                        detail,
-                        notes
+                    this.historiesByModule[this.activeModule].unshift({
+                        id: Date.now(), timestamp, type, code, assetName, detail, notes
                     });
                 },
 
-                clearHistory() {
-                    if (confirm('Yakin ingin menghapus seluruh histori aktivitas?')) {
-                        this.histories = [];
-                        this.showToast('Histori aktivitas dibersihkan.', 'success');
+                clearModuleHistory() {
+                    if (confirm(`Hapus semua histori modul ${this.activeModule}?`)) {
+                        this.historiesByModule[this.activeModule] = [];
+                        this.persistData();
+                        this.showToast(`Histori ${this.activeModule} dibersihkan.`);
                     }
                 },
 
-                // Computed / Filtered Assets for Table & Pagination
                 get filteredAssets() {
-                    return this.assets.filter(asset => {
-                        const matchSearch = asset.name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                                            asset.code.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                                            asset.holder.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                                            asset.location.toLowerCase().includes(this.searchQuery.toLowerCase());
-                        const matchCategory = this.filterCategory === '' || asset.category === this.filterCategory;
-                        const matchStatus = this.filterStatus === '' || asset.status === this.filterStatus;
-                        return matchSearch && matchCategory && matchStatus;
+                    return this.currentAssets.filter(asset => {
+                        const q = this.searchQuery.toLowerCase();
+                        const matchSearch = !q ||
+                            asset.name.toLowerCase().includes(q) ||
+                            asset.code.toLowerCase().includes(q) ||
+                            asset.location.toLowerCase().includes(q) ||
+                            asset.holder.toLowerCase().includes(q) ||
+                            (asset.identifier && asset.identifier.toLowerCase().includes(q));
+                        const matchCat = !this.filterCategory || asset.category === this.filterCategory;
+                        const matchStatus = !this.filterStatus || asset.status === this.filterStatus;
+                        return matchSearch && matchCat && matchStatus;
                     });
                 },
 
@@ -721,50 +770,54 @@
 
                 get paginatedAssets() {
                     const start = (this.currentPage - 1) * this.itemsPerPage;
-                    const end = start + this.itemsPerPage;
-                    return this.filteredAssets.slice(start, end);
+                    return this.filteredAssets.slice(start, start + this.itemsPerPage);
                 },
 
-                firstPage() {
-                    this.currentPage = 1;
-                },
+                firstPage() { this.currentPage = 1; },
+                prevPage() { if (this.currentPage > 1) this.currentPage--; },
+                nextPage() { if (this.currentPage < this.totalPages) this.currentPage++; },
+                lastPage() { this.currentPage = this.totalPages || 1; },
 
-                prevPage() {
-                    if (this.currentPage > 1) this.currentPage--;
-                },
-
-                nextPage() {
-                    if (this.currentPage < this.totalPages) this.currentPage++;
-                },
-
-                lastPage() {
-                    this.currentPage = this.totalPages || 1;
-                },
-
-                // Export to Excel using SheetJS
-                exportToExcel() {
-                    const dataToExport = this.filteredAssets.map(a => ({
-                        'Kode/Barcode': a.code,
+                // Laporan Excel Terpisah Khusus Modul (IT / GA)
+                exportModuleExcel(mod) {
+                    const sourceData = (mod === this.activeModule ? this.filteredAssets : this.assetsByModule[mod]) || [];
+                    const rows = sourceData.map(a => ({
+                        'Modul': mod,
+                        'Kode Asset': a.code,
                         'Nama Asset': a.name,
                         'Kategori': a.category,
+                        [mod === 'IT' ? 'Serial Number / Spec' : 'No. Polisi / Kode Ruang']: a.identifier || '-',
+                        [mod === 'IT' ? 'Akhir Garansi / Lisensi' : 'Jadwal Pajak / Servis']: a.dueDate || '-',
                         'Kondisi': a.condition,
                         'Lokasi': a.location,
                         'Penanggung Jawab': a.holder,
                         'Status': a.status
                     }));
 
-                    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-                    const workbook = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Asset IT");
-                    XLSX.writeFile(workbook, "Laporan_Asset_IT.xlsx");
-                    this.showToast('Laporan berhasil diunduh ke Excel!', 'success');
+                    const ws = XLSX.utils.json_to_sheet(rows);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, `Laporan_Asset_${mod}`);
+                    XLSX.writeFile(wb, `Laporan_Asset_${mod}.xlsx`);
+                    this.showToast(`Laporan Excel modul ${mod} berhasil diunduh.`);
                 },
 
-                // Export to PDF / Print Window
-                exportToPDF() {
-                    window.print();
+                exportHistoryExcel(mod) {
+                    const rows = (this.historiesByModule[mod] || []).map(h => ({
+                        'Waktu': h.timestamp,
+                        'Modul': mod,
+                        'Tipe': h.type,
+                        'Kode Asset': h.code,
+                        'Nama Asset': h.assetName,
+                        'Detail': h.detail,
+                        'Catatan': h.notes || '-'
+                    }));
+                    const ws = XLSX.utils.json_to_sheet(rows);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, `Histori_${mod}`);
+                    XLSX.writeFile(wb, `Histori_Asset_${mod}.xlsx`);
+                    this.showToast(`Laporan Excel histori ${mod} berhasil diunduh.`);
                 }
-            }
+            };
         }
     </script>
 </body>
