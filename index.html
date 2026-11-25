@@ -17,7 +17,7 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased" x-data="assetApp()">
+<body class="bg-gray-50 text-gray-800 antialiased" x-data="assetApp()" x-init="initApp()">
 
     <!-- Custom Notification Toast -->
     <div x-show="toast.show" x-transition x-cloak
@@ -85,8 +85,14 @@
                     </button>
                 </nav>
 
-                <!-- Quick Action Button -->
-                <div class="flex items-center space-x-2 shrink-0">
+                <!-- Quick Action Buttons -->
+                <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+                    <button type="button" @click="clearStorage()"
+                            title="Hapus seluruh data localStorage"
+                            class="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 sm:px-3 py-2 rounded-xl text-xs font-medium transition-all flex items-center space-x-1.5">
+                        <i class="fa-solid fa-database"></i>
+                        <span class="hidden md:inline">Clear Storage</span>
+                    </button>
                     <button type="button" @click="openAssetModal()"
                             :class="activeModule === 'IT' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-teal-600 hover:bg-teal-700'"
                             class="text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium shadow-sm transition-all flex items-center space-x-1.5 sm:space-x-2">
@@ -270,7 +276,7 @@
                                     <tr>
                                         <td colspan="8" class="px-6 py-12 text-center text-gray-400">
                                             <i class="fa-solid fa-folder-open text-3xl sm:text-4xl mb-2"></i>
-                                            <p>Tidak ada data asset <span x-text="activeModule"></span> ditemukan.</p>
+                                            <p>Belum ada data asset <span x-text="activeModule"></span>. Klik "Tambah Asset" untuk memulai.</p>
                                         </td>
                                     </tr>
                                 </template>
@@ -422,7 +428,7 @@
                         <h2 class="text-sm sm:text-base font-bold text-gray-900">Log Histori & Aktivitas Asset <span x-text="activeModule"></span></h2>
                         <p class="text-xs text-gray-500">Rekam jejak seluruh penambahan, perpindahan, dan pengembalian asset <span x-text="activeModule"></span></p>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
                         <button type="button" @click="exportHistoryToExcel()" class="text-xs text-emerald-700 hover:text-emerald-900 font-medium px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-200 transition-colors">
                             <i class="fa-solid fa-file-excel mr-1"></i> Excel Histori
                         </button>
@@ -483,8 +489,11 @@
         </main>
 
         <!-- FOOTER -->
-        <footer class="bg-white border-t border-gray-200 mt-auto py-4 text-center text-xs text-gray-500">
-            &copy; 2026 IT & GA Asset Management System. All rights reserved.
+        <footer class="bg-white border-t border-gray-200 mt-auto py-4 px-4 text-center text-xs text-gray-500 flex flex-col sm:flex-row items-center justify-between max-w-7xl w-full mx-auto gap-2">
+            <span>&copy; 2026 IT & GA Asset Management System. All rights reserved.</span>
+            <button type="button" @click="clearStorage()" class="text-rose-600 hover:underline font-medium">
+                <i class="fa-solid fa-trash-can mr-1"></i>Clear Storage
+            </button>
         </footer>
     </div>
 
@@ -567,6 +576,11 @@
     <!-- Alpine.js & Logic Script -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script>
+        const STORAGE_KEYS = {
+            ASSETS: 'asset_mgmt_clean_assets_v1',
+            HISTORIES: 'asset_mgmt_clean_histories_v1'
+        };
+
         function assetApp() {
             return {
                 activeModule: 'IT', // 'IT' atau 'GA'
@@ -588,44 +602,14 @@
                     type: 'success'
                 },
 
-                showToast(message, type = 'success') {
-                    this.toast.message = message;
-                    this.toast.type = type;
-                    this.toast.show = true;
-                    setTimeout(() => {
-                        this.toast.show = false;
-                    }, 3500);
-                },
-
                 assetsByModule: {
-                    IT: [
-                        { id: 1, code: 'AST-LPT-001', name: 'MacBook Pro M2 14"', category: 'Laptop', condition: 'Baik', location: 'Ruang Meeting Lt. 2', holder: 'Rian Utama', status: 'Digunakan' },
-                        { id: 2, code: 'AST-LPT-002', name: 'Lenovo ThinkPad X1 Carbon', category: 'Laptop', condition: 'Baik', location: 'Gudang IT', holder: 'Tim IT Support', status: 'Tersedia' },
-                        { id: 3, code: 'AST-DSK-001', name: 'PC Custom Core i7 RTX 3060', category: 'PC Desktop', condition: 'Baik', location: 'Divisi Desain', holder: 'Siti Aminah', status: 'Digunakan' },
-                        { id: 4, code: 'AST-MNT-001', name: 'Dell UltraSharp 27 4K', category: 'Monitor', condition: 'Baik', location: 'Divisi Desain', holder: 'Siti Aminah', status: 'Digunakan' },
-                        { id: 5, code: 'AST-PRT-001', name: 'Epson L3210 All-in-One', category: 'Printer', condition: 'Perlu Servis', location: 'Administrasi Lt. 1', holder: 'Dewi Lestari', status: 'Perbaikan' },
-                        { id: 6, code: 'AST-NET-001', name: 'Cisco Catalyst 2960 Switch', category: 'Networking', condition: 'Baik', location: 'Ruang Server Utama', holder: 'Andi Network', status: 'Digunakan' },
-                        { id: 7, code: 'AST-SRV-001', name: 'Dell PowerEdge R740 Server', category: 'Server', condition: 'Baik', location: 'Ruang Server Utama', holder: 'Andi Network', status: 'Digunakan' },
-                        { id: 8, code: 'AST-LPT-003', name: 'ASUS Zenbook 14 OLED', category: 'Laptop', condition: 'Baik', location: 'Gudang IT', holder: 'Tim IT Support', status: 'Tersedia' }
-                    ],
-                    GA: [
-                        { id: 101, code: 'GA-VHC-001', name: 'Toyota Avanza 1.5 G (B 1420 KFA)', category: 'Kendaraan Operasional', condition: 'Baik', location: 'Parkir Basement', holder: 'Budi Driver', status: 'Digunakan' },
-                        { id: 102, code: 'GA-FUR-001', name: 'Meja & Kursi Kerja Ergonomis', category: 'Furnitur Kantor', condition: 'Baik', location: 'Lantai 2 Operasional', holder: 'Siti GA', status: 'Digunakan' },
-                        { id: 103, code: 'GA-AC-001', name: 'AC Split Daikin 2 PK', category: 'AC & Elektronik', condition: 'Perlu Servis', location: 'Ruang Rapat Utama', holder: 'Tim GA', status: 'Perbaikan' },
-                        { id: 104, code: 'GA-BLD-001', name: 'Genset Silent 30 kVA', category: 'Peralatan Gedung', condition: 'Baik', location: 'Area Utility Lt. 1', holder: 'Tim GA', status: 'Tersedia' }
-                    ]
+                    IT: [],
+                    GA: []
                 },
 
                 historiesByModule: {
-                    IT: [
-                        { id: 1, timestamp: '2026-06-01 09:30', type: 'TAMBAH', code: 'AST-LPT-001', assetName: 'MacBook Pro M2 14"', detail: 'Registrasi asset baru ke sistem', notes: 'Pembelian baru' },
-                        { id: 2, timestamp: '2026-06-03 14:15', type: 'PERPINDAHAN', code: 'AST-LPT-001', assetName: 'MacBook Pro M2 14"', detail: 'Dari Gudang ke Ruang Meeting Lt. 2 (PJ: Rian Utama)', notes: 'Keperluan presentasi klien' },
-                        { id: 3, timestamp: '2026-06-05 10:00', type: 'TAMBAH', code: 'AST-PRT-001', assetName: 'Epson L3210 All-in-One', detail: 'Registrasi asset baru ke sistem', notes: 'Inventaris kantor' }
-                    ],
-                    GA: [
-                        { id: 1, timestamp: '2026-06-02 08:45', type: 'TAMBAH', code: 'GA-VHC-001', assetName: 'Toyota Avanza 1.5 G (B 1420 KFA)', detail: 'Registrasi kendaraan operasional GA', notes: 'STNK aktif' },
-                        { id: 2, timestamp: '2026-06-04 11:20', type: 'PERPINDAHAN', code: 'GA-FUR-001', assetName: 'Meja & Kursi Kerja Ergonomis', detail: 'Dari Gudang GA ke Lantai 2 Operasional (PJ: Siti GA)', notes: 'Penataan ruang kerja' }
-                    ]
+                    IT: [],
+                    GA: []
                 },
 
                 isAssetModalOpen: false,
@@ -655,6 +639,57 @@
                     currentHolder: '',
                     condition: 'Baik',
                     notes: ''
+                },
+
+                initApp() {
+                    try {
+                        const savedAssets = localStorage.getItem(STORAGE_KEYS.ASSETS);
+                        const savedHistories = localStorage.getItem(STORAGE_KEYS.HISTORIES);
+                        if (savedAssets) {
+                            const parsed = JSON.parse(savedAssets);
+                            this.assetsByModule = {
+                                IT: Array.isArray(parsed.IT) ? parsed.IT : [],
+                                GA: Array.isArray(parsed.GA) ? parsed.GA : []
+                            };
+                        }
+                        if (savedHistories) {
+                            const parsedHist = JSON.parse(savedHistories);
+                            this.historiesByModule = {
+                                IT: Array.isArray(parsedHist.IT) ? parsedHist.IT : [],
+                                GA: Array.isArray(parsedHist.GA) ? parsedHist.GA : []
+                            };
+                        }
+                    } catch (e) {
+                        this.assetsByModule = { IT: [], GA: [] };
+                        this.historiesByModule = { IT: [], GA: [] };
+                    }
+                },
+
+                saveToStorage() {
+                    localStorage.setItem(STORAGE_KEYS.ASSETS, JSON.stringify(this.assetsByModule));
+                    localStorage.setItem(STORAGE_KEYS.HISTORIES, JSON.stringify(this.historiesByModule));
+                },
+
+                clearStorage() {
+                    if (confirm('Hapus seluruh data tersimpan di storage (Asset & Histori IT & GA)?')) {
+                        localStorage.removeItem(STORAGE_KEYS.ASSETS);
+                        localStorage.removeItem(STORAGE_KEYS.HISTORIES);
+                        this.assetsByModule = { IT: [], GA: [] };
+                        this.historiesByModule = { IT: [], GA: [] };
+                        this.currentPage = 1;
+                        this.transferForm = { assetId: '', oldLocation: '', newLocation: '', oldHolder: '', newHolder: '', notes: '' };
+                        this.returnForm = { assetId: '', currentHolder: '', condition: 'Baik', notes: '' };
+                        this.showToast('Storage berhasil dibersihkan. Data kosong.', 'success');
+                    }
+                },
+
+                showToast(message, type = 'success') {
+                    this.toast.message = message;
+                    this.toast.type = type;
+                    this.toast.show = true;
+                    setTimeout(() => {
+                        this.toast.show = false;
+                    }, 3500);
                 },
 
                 get currentAssets() {
@@ -698,12 +733,14 @@
                         if (index !== -1) {
                             list[index] = { ...this.assetForm };
                             this.addHistory('PERPINDAHAN', this.assetForm.code, this.assetForm.name, `Pembaruan data asset: Lokasi (${this.assetForm.location}), PJ (${this.assetForm.holder})`, 'Edit manual');
+                            this.saveToStorage();
                             this.showToast(`Asset ${this.activeModule} berhasil diperbarui!`, 'success');
                         }
                     } else {
                         const newAsset = { ...this.assetForm, id: Date.now() };
                         list.push(newAsset);
                         this.addHistory('TAMBAH', newAsset.code, newAsset.name, `Registrasi asset baru ke inventaris ${this.activeModule}`, 'Input baru');
+                        this.saveToStorage();
                         this.showToast(`Asset ${this.activeModule} baru berhasil ditambahkan!`, 'success');
                     }
                     this.closeAssetModal();
@@ -716,6 +753,7 @@
                             this.addHistory('HAPUS', asset.code, asset.name, 'Asset dihapus dari sistem', 'Penghapusan data');
                         }
                         this.assetsByModule[this.activeModule] = this.currentAssets.filter(a => a.id !== id);
+                        this.saveToStorage();
                         this.showToast('Asset berhasil dihapus.', 'success');
                     }
                 },
@@ -744,6 +782,7 @@
                     asset.status = 'Digunakan';
 
                     this.addHistory('PERPINDAHAN', asset.code, asset.name, detailText, this.transferForm.notes);
+                    this.saveToStorage();
                     this.showToast('Perpindahan asset berhasil dicatat!', 'success');
 
                     this.transferForm = { assetId: '', oldLocation: '', newLocation: '', oldHolder: '', newHolder: '', notes: '' };
@@ -771,6 +810,7 @@
 
                     const detailText = `Dikembalikan oleh ${prevHolder} ke ${asset.location} (Kondisi: ${this.returnForm.condition})`;
                     this.addHistory('PENGEMBALIAN', asset.code, asset.name, detailText, this.returnForm.notes);
+                    this.saveToStorage();
                     this.showToast('Pengembalian asset berhasil diproses!', 'success');
 
                     this.returnForm = { assetId: '', currentHolder: '', condition: 'Baik', notes: '' };
@@ -794,6 +834,7 @@
                 clearHistory() {
                     if (confirm(`Yakin ingin menghapus seluruh histori aktivitas ${this.activeModule}?`)) {
                         this.historiesByModule[this.activeModule] = [];
+                        this.saveToStorage();
                         this.showToast(`Histori aktivitas ${this.activeModule} dibersihkan.`, 'success');
                     }
                 },
